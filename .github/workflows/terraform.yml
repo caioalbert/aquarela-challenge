@@ -11,7 +11,6 @@ jobs:
   terraform-plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout código
@@ -33,16 +32,15 @@ jobs:
         run: |
           terraform init \
             -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
-            -backend-config="key=eks-${{ github.event.inputs.environment }}.tfstate" \
+            -backend-config="key=eks.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ secrets.TF_BACKEND_DYNAMODB }}" \
             -backend-config="encrypt=true"
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan -var-file="vars/${{ github.event.inputs.environment }}.tfvars"
+        run: terraform plan -out=tfplan -var-file="vars/default.tfvars"
 
       - name: Salvar plano como artifact
         uses: actions/upload-artifact@v4
@@ -54,9 +52,6 @@ jobs:
     name: Terraform Apply
     needs: terraform-plan
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.event.inputs.environment }}
-      url: https://github.com/${{ github.repository }}/environments/${{ github.event.inputs.environment }}
 
     steps:
       - name: Checkout código
